@@ -1,0 +1,15 @@
+FROM node:lts-alpine
+
+ARG NPM_TOKEN
+
+WORKDIR /usr/app
+
+COPY package*.json ./
+COPY .npmrc ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 8080
+CMD [ "npm", "run", "watch" ]
