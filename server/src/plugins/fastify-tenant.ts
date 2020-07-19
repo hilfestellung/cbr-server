@@ -1,14 +1,28 @@
 import fp from 'fastify-plugin';
 import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
-export interface TenantOptions {
+export interface TenantInformation {
+  name: string;
+  settings: any;
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    tenant: TenantInformation;
+  }
+  // interface FastifyReply {
+  //   myPluginProp: number
+  // }
+}
+
+export interface TenantOptions<T extends TenantInformation> {
   tenantHeader?: string;
-  tenantResolver?: (tenantId: string) => Promise<any>;
+  tenantResolver?: (tenantId: string) => Promise<T>;
 }
 
 function plugin(
   fastify: FastifyInstance,
-  options: TenantOptions & FastifyPluginOptions,
+  options: TenantOptions<any> & FastifyPluginOptions,
   next: Function
 ) {
   const {
@@ -34,9 +48,13 @@ function plugin(
         .send({ code: 'InvalidTenant', message: 'Invalid tenant' });
       return;
     }
-    const tenant = tenantMatcher[2] || tenantMatcher[5];
-    (request as any).tenant = await tenantResolver(tenant);
-    log.debug({ tenant: (request as any).tenant }, 'Tenant info');
+    const tenant = tenantMatcher[2]
+      ? tenantMatcher[2]
+      : tenantMatcher[5] !== 'org'
+      ? tenantMatcher[5]
+      : tenantMatcher[4];
+    request.tenant = await tenantResolver(tenant);
+    log.debug({ tenant: request.tenant }, `Tenant info for ${tenant}`);
   });
   next();
 }

@@ -17,12 +17,15 @@
     "watch": "nodemon --watch ./src --exec ts-node ./src/index.ts",
     "build": "tsc",
     "test": "run-s test:unit",
-    "test:unit": "rimraf coverage && jest --coverage"
+    "test:unit": "rimraf coverage && jest --coverage",
+    "docker:install": "docker exec -it cbr_server npm install",
+    "docker:update": "docker exec -it cbr_server npm update"
   },
   "devDependencies": {
     "@types/fastify-cors": "^2.1.0",
     "@types/jest": "^25.1.4",
     "@types/jsonwebtoken": "^8.5.0",
+    "@types/mongoose": "^5.7.32",
     "@types/node": "^12.12.38",
     "@types/uuid": "^8.0.0",
     "cross-env": "^7.0.2",
@@ -39,6 +42,7 @@
     "typescript": "^3.9.6"
   },
   "dependencies": {
+    "@hapi/boom": "^9.1.0",
     "@hilfestellung/fastify-tracing": "0.0.4",
     "fastify": "^3.0.2",
     "fastify-compress": "^3.2.1",
@@ -46,6 +50,7 @@
     "fastify-plugin": "^2.0.1",
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^1.8.1",
+    "mongoose": "^5.9.25",
     "uuid": "^8.2.0"
   }
 }

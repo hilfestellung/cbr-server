@@ -8,28 +8,81 @@ import {
 import { verify, decode } from 'jsonwebtoken';
 
 import jwksClient from 'jwks-rsa';
+import { TenantInformation } from './fastify-tenant';
 
-export interface ConfigProviderFn {
-  (tenant: string): Promise<jwksClient.ClientOptions>;
+export enum JwksJwtStatus {
+  None,
+  Invalid,
+  Valid,
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    jwt: {
+      user: any;
+      status: JwksJwtStatus;
+      mayProceed: () => boolean;
+    };
+  }
+  // interface FastifyReply {
+  //   myPluginProp: number
+  // }
+}
+
+export interface ConfigProviderFn<T extends TenantInformation> {
+  (tenant: T): Promise<jwksClient.ClientOptions>;
 }
 
 export interface JwksJwtOptions {
-  configProvider: ConfigProviderFn;
-  complete?: (subject: string, audience: string) => Promise<object>;
+  configProvider: ConfigProviderFn<any>;
+  complete?: (
+    subject: string,
+    audience: string,
+    request: FastifyRequest
+  ) => Promise<object>;
+}
+
+export function jwtValid(
+  request: FastifyRequest,
+  _reply: FastifyReply,
+  done: Function
+) {
+  if (!request.jwt.mayProceed()) {
+    return done(new Error());
+  }
+  done();
 }
 
 const cache: any = {};
 
 async function getClient(
-  host: string,
-  configProvider: ConfigProviderFn
+  tenant: TenantInformation,
+  configProvider: ConfigProviderFn<any>
 ): Promise<jwksClient.JwksClient> {
-  const tenantMatcher = /(\w+)\..*/gi.exec(host);
-  const tenant = tenantMatcher ? tenantMatcher[1] : 'default';
-  if (!cache[tenant]) {
-    cache[tenant] = jwksClient(await configProvider(tenant));
+  if (!cache[tenant.name]) {
+    cache[tenant.name] = jwksClient(await configProvider(tenant));
   }
-  return cache[tenant];
+  return cache[tenant.name];
+}
+
+function createMayProceed(status: JwksJwtStatus, reply: FastifyReply) {
+  return () => {
+    if (status === JwksJwtStatus.None) {
+      reply.status(403).send({
+        code: 'MissingJsonWebToken',
+        message: 'The request is missing a JSON Web Token.',
+      });
+      return false;
+    }
+    if (status === JwksJwtStatus.Invalid) {
+      reply.status(403).send({
+        code: 'InvalidJsonWebToken',
+        message: 'The request has an invalid JSON Web Token.',
+      });
+      return false;
+    }
+    return true;
+  };
 }
 
 function plugin<JwksJwtOptions>(
@@ -39,18 +92,25 @@ function plugin<JwksJwtOptions>(
 ) {
   const provider = options.configProvider;
   const complete = options.complete;
-  provider('default').then((config: any) => fastify.log.debug({ config }));
   fastify.decorateRequest('user', false);
   fastify.addHook(
     'onRequest',
-    (request: FastifyRequest, _reply: FastifyReply, done: Function) => {
-      const host = request.hostname;
+    (request: FastifyRequest, reply: FastifyReply, done: Function) => {
       const authorization = request.headers.authorization;
 
       if (authorization && authorization.startsWith('Bearer ')) {
         const token = authorization.substring(authorization.indexOf(' ') + 1);
         const preDecode: any = decode(token, { complete: true });
-        getClient(host, provider).then((client) => {
+        getClient(request.tenant, provider).then((client) => {
+          if (!client) {
+            request.jwt = {
+              user: undefined,
+              status: JwksJwtStatus.None,
+              mayProceed: createMayProceed(JwksJwtStatus.None, reply),
+            };
+            done();
+            return;
+          }
           client.getSigningKey(preDecode.header.kid, (err: any, key: any) => {
             if (err) {
               request.log.error(err);
@@ -58,23 +118,49 @@ function plugin<JwksJwtOptions>(
               try {
                 const decoded = verify(token, key.publicKey) as any;
                 if (typeof complete === 'function') {
-                  complete(decoded.sub, decoded.aud).then((user: any) => {
-                    (request as any).user = user;
-                    done();
-                  });
+                  complete(decoded.sub, decoded.aud, request)
+                    .then((user: any) => {
+                      request.jwt = {
+                        user,
+                        status: JwksJwtStatus.Valid,
+                        mayProceed: createMayProceed(
+                          JwksJwtStatus.Valid,
+                          reply
+                        ),
+                      };
+                      done();
+                    })
+                    .catch((err: any) => {
+                      request.log.error(err);
+                      request.jwt = {
+                        user: undefined,
+                        status: JwksJwtStatus.Invalid,
+                        mayProceed: createMayProceed(
+                          JwksJwtStatus.Invalid,
+                          reply
+                        ),
+                      };
+                      done({
+                        statusCode: 403,
+                        code: 'ErrorCompletingUser',
+                        message: 'Error while completing the user information.',
+                      });
+                    });
                 } else {
-                  (request as any).user = decoded;
+                  request.jwt = {
+                    user: decoded,
+                    status: JwksJwtStatus.Valid,
+                    mayProceed: createMayProceed(JwksJwtStatus.Valid, reply),
+                  };
                   done();
                 }
               } catch (error) {
-                // request.log.error(error);
-                if (error.message) {
-                  _reply
-                    .status(403)
-                    .send({ type: error.type, message: error.message });
-                } else {
-                  _reply.status(403).send(error);
-                }
+                request.log.error(error);
+                request.jwt = {
+                  user: undefined,
+                  status: JwksJwtStatus.Invalid,
+                  mayProceed: createMayProceed(JwksJwtStatus.Invalid, reply),
+                };
                 done();
               }
             }

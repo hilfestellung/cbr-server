@@ -1,8 +1,7 @@
 import {
   fastify as createFastify,
   FastifyRequest,
-  FastifyReply,
-  RegisterOptions,
+  RouteOptions,
 } from 'fastify';
 import { AddressInfo } from 'net';
 
@@ -10,14 +9,18 @@ import cors from 'fastify-cors';
 import compress from 'fastify-compress';
 import tracing from '@hilfestellung/fastify-tracing';
 
-import tenant from './plugins/fastify-tenant';
+import tenant, { TenantInformation } from './plugins/fastify-tenant';
 import jwksJwt from './plugins/fastify-jwks-rsa-jwt-verify';
 import jwksClient from 'jwks-rsa';
+import { connect } from 'mongoose';
+import { Tenant } from './model/tenant/Tenant';
+import routes from './api/routes';
+import { User } from './model/User';
 
 const fastify = createFastify({ logger: { level: 'debug' } });
 
 const opt: any = {
-  configProvider: (_tenant: string) => {
+  configProvider: (_tenant: TenantInformation) => {
     return Promise.resolve({
       strictSsl: true, // Default value
       jwksUri: 'https://cdein.eu.auth0.com/.well-known/jwks.json',
@@ -25,7 +28,37 @@ const opt: any = {
       timeout: 30000, // Defaults to 30s
     } as jwksClient.ClientOptions);
   },
-} as RegisterOptions;
+  complete: (subject: string, _audience: string, request: FastifyRequest) => {
+    return User.findOne({
+      subject,
+      tenant: request.tenant.name,
+    })
+      .then((doc) => doc?.toObject())
+      .then((user) => {
+        if (user != null) {
+          return user;
+        }
+        const newUser: any = { subject, tenant: request.tenant.name };
+        return User.find()
+          .limit(1)
+          .then((docs) => {
+            if (docs.length === 0) {
+              // Create the first user as a super user.
+              newUser.permissions = ['super'];
+            }
+            request.log.debug({ newUser }, 'New user ' + subject);
+            return new User(newUser).save().then((doc) => doc.toObject());
+          });
+      });
+  },
+};
+
+connect('mongodb://mongo/cbr', {
+  authSource: 'admin',
+  auth: { user: 'root', password: process.env.DATABASE_PASSWORD as string },
+})
+  .then(() => console.log('MongoDB connected…'))
+  .catch((err) => console.log(err));
 
 fastify.register(tracing);
 fastify.register(compress);
@@ -48,17 +81,19 @@ fastify.register(cors, {
   preflightContinue: false,
   preflight: true,
 });
-fastify.register(tenant, {});
+fastify.register(tenant, {
+  tenantResolver: (tenantId) => {
+    let tenant = tenantId;
+    if (['case-based-reasoning', 'localhost'].includes(tenant)) {
+      tenant = 'cbr';
+    }
+    return Tenant.findOne({ name: tenant }).then((doc) => doc?.toObject());
+  },
+});
 fastify.register(jwksJwt, opt);
 
-// Declare a route
-fastify.get('/', async (request: FastifyRequest, _reply: FastifyReply) => {
-  return {
-    hello: 'my docker world',
-    user: (request as any).user,
-    headers: request.headers,
-  };
-});
+// Declare a routes
+routes.forEach((route) => fastify.route(route as RouteOptions));
 
 // Run the server!
 const start = async () => {
