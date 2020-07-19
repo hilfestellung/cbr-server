@@ -167,6 +167,11 @@ function plugin<JwksJwtOptions>(
           });
         });
       } else {
+        request.jwt = {
+          user: undefined,
+          status: JwksJwtStatus.None,
+          mayProceed: createMayProceed(JwksJwtStatus.None, reply),
+        };
         done();
       }
     }
