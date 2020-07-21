@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 import { classFactory } from '@hilfestellung/cbr-kernel';
 
-const BaseDefinition = {
+export const BaseDefinition = {
   id: { type: Schema.Types.Mixed },
   properties: { type: Object },
 };

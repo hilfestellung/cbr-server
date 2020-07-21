@@ -2,6 +2,7 @@ import { TenantController } from './tenant';
 import { jwtValid } from '../plugins/fastify-jwks-rsa-jwt-verify';
 import { UserController } from './user/controller';
 import { ModelClassController } from './model/modelclass-controller';
+import { ProjectController } from './model/project-controller';
 
 export default [
   {
@@ -44,5 +45,28 @@ export default [
     url: '/class/:id',
     preValidation: jwtValid,
     handler: ModelClassController.putClass,
+  },
+  // Project
+  {
+    method: 'GET',
+    url: '/project',
+    handler: ProjectController.getProjects,
+  },
+  {
+    method: 'POST',
+    url: '/project',
+    preValidation: jwtValid,
+    handler: ProjectController.postProject,
+  },
+  {
+    method: 'GET',
+    url: '/project/:id',
+    handler: ProjectController.getProject,
+  },
+  {
+    method: 'PUT',
+    url: '/project/:id',
+    preValidation: jwtValid,
+    handler: ProjectController.putProject,
   },
 ];
