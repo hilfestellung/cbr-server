@@ -24,8 +24,7 @@ async function getClass(request: FastifyRequest, reply: FastifyReply) {
       message: 'Class resource is not found by the given ID.',
     });
   }
-  modelClass.set(request.body);
-  return (await modelClass.save()).toObject();
+  return modelClass.toObject();
 }
 
 async function postClass(request: FastifyRequest, _reply: FastifyReply) {
