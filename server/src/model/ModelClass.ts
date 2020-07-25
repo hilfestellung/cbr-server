@@ -34,7 +34,6 @@ const ModelClassSchema = new Schema(
     timestamps: true,
     toObject: {
       transform: (_doc, ret) => {
-        console.log(ret);
         return classFactory(ret);
       },
     },

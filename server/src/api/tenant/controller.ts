@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { boomify } from '@hapi/boom';
-import { Tenant } from '../../model/tenant/Tenant';
+import { Tenant } from '../../model/Tenant';
 
 async function getRoot(request: FastifyRequest, reply: FastifyReply) {
   try {

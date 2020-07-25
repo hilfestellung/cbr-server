@@ -13,7 +13,6 @@ const ProjectSchema = new Schema(
     timestamps: true,
     toObject: {
       transform: (_doc, ret) => {
-        console.log(ret);
         return projectFactory(ret);
       },
     },

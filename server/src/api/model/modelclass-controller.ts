@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { ModelClass } from '../../model/ModelClass';
+import { classFactory } from '@hilfestellung/cbr-kernel';
 
 async function getClasses(request: FastifyRequest, _reply: FastifyReply) {
   const { skip = '0', limit = '20' }: any = request.query;
@@ -30,7 +31,9 @@ async function getClass(request: FastifyRequest, reply: FastifyReply) {
 async function postClass(request: FastifyRequest, _reply: FastifyReply) {
   request.log.debug({ data: request.body });
   return (
-    await new ModelClass(request.body).set('tenant', request.tenant.name).save()
+    await new ModelClass(classFactory(request.body)?.toJSON())
+      .set('tenant', request.tenant.name)
+      .save()
   ).toObject();
 }
 
@@ -46,8 +49,23 @@ async function putClass(request: FastifyRequest, reply: FastifyReply) {
       message: 'Class resource is not found by the given ID.',
     });
   }
-  modelClass.set(request.body);
+  modelClass.set(classFactory(request.body)?.toJSON());
   return (await modelClass.save()).toObject();
+}
+
+async function removeClass(request: FastifyRequest, reply: FastifyReply) {
+  const { id }: any = request.params;
+  const modelClass = await ModelClass.findOne({
+    id,
+    tenant: request.tenant.name,
+  });
+  if (modelClass == null) {
+    return reply.status(404).send({
+      code: 'ClassNotFound',
+      message: 'Class resource is not found by the given ID.',
+    });
+  }
+  return (await modelClass.deleteOne()).toObject();
 }
 
 export const ModelClassController = {
@@ -55,4 +73,5 @@ export const ModelClassController = {
   postClass,
   getClass,
   putClass,
+  removeClass,
 };

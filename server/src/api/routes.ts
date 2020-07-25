@@ -3,6 +3,7 @@ import { jwtValid } from '../plugins/fastify-jwks-rsa-jwt-verify';
 import { UserController } from './user/controller';
 import { ModelClassController } from './model/modelclass-controller';
 import { ProjectController } from './model/project-controller';
+import { EvaluatorController } from './model/evaluator-controller';
 
 export default [
   {
@@ -45,6 +46,41 @@ export default [
     url: '/class/:id',
     preValidation: jwtValid,
     handler: ModelClassController.putClass,
+  },
+  {
+    method: 'DELETE',
+    url: '/class/:id',
+    preValidation: jwtValid,
+    handler: ModelClassController.removeClass,
+  },
+  // Evaluator
+  {
+    method: 'GET',
+    url: '/evaluator',
+    handler: EvaluatorController.getEvaluators,
+  },
+  {
+    method: 'POST',
+    url: '/evaluator',
+    preValidation: jwtValid,
+    handler: EvaluatorController.postEvaluator,
+  },
+  {
+    method: 'GET',
+    url: '/evaluator/:id',
+    handler: EvaluatorController.getEvaluator,
+  },
+  {
+    method: 'PUT',
+    url: '/evaluator/:id',
+    preValidation: jwtValid,
+    handler: EvaluatorController.putEvaluator,
+  },
+  {
+    method: 'DELETE',
+    url: '/evaluator/:id',
+    preValidation: jwtValid,
+    handler: EvaluatorController.removeEvaluator,
   },
   // Project
   {

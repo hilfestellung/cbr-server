@@ -13,7 +13,7 @@ import tenant, { TenantInformation } from './plugins/fastify-tenant';
 import jwksJwt from './plugins/fastify-jwks-rsa-jwt-verify';
 import jwksClient from 'jwks-rsa';
 import { connect } from 'mongoose';
-import { Tenant } from './model/tenant/Tenant';
+import { Tenant } from './model/Tenant';
 import routes from './api/routes';
 import { User } from './model/User';
 

@@ -22,6 +22,7 @@
     "docker:update": "docker exec -it cbr_server npm update"
   },
   "devDependencies": {
+    "@hilfestellung/cbr-kernel": "0.0.12",
     "@types/fastify-cors": "^2.1.0",
     "@types/jest": "^25.1.4",
     "@types/jsonwebtoken": "^8.5.0",
@@ -43,7 +44,6 @@
   },
   "dependencies": {
     "@hapi/boom": "^9.1.0",
-    "@hilfestellung/cbr-kernel": "0.0.8",
     "@hilfestellung/fastify-tracing": "0.0.4",
     "fastify": "^3.1.1",
     "fastify-compress": "^3.2.1",
