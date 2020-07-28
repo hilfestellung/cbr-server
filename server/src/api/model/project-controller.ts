@@ -29,7 +29,6 @@ async function getProject(request: FastifyRequest, reply: FastifyReply) {
 }
 
 async function postProject(request: FastifyRequest, _reply: FastifyReply) {
-  request.log.debug({ data: request.body });
   return (
     await new Project(request.body).set('tenant', request.tenant.name).save()
   ).toObject();

@@ -4,6 +4,7 @@ import { UserController } from './user/controller';
 import { ModelClassController } from './model/modelclass-controller';
 import { ProjectController } from './model/project-controller';
 import { EvaluatorController } from './model/evaluator-controller';
+import { AggregateObjectController } from './model/aggregate-controller';
 
 export default [
   {
@@ -104,5 +105,28 @@ export default [
     url: '/project/:id',
     preValidation: jwtValid,
     handler: ProjectController.putProject,
+  },
+  // AggregateObject
+  {
+    method: 'GET',
+    url: '/aggregate',
+    handler: AggregateObjectController.getObjects,
+  },
+  {
+    method: 'POST',
+    url: '/aggregate',
+    preValidation: jwtValid,
+    handler: AggregateObjectController.postObject,
+  },
+  {
+    method: 'GET',
+    url: '/aggregate/:id',
+    handler: AggregateObjectController.getObject,
+  },
+  {
+    method: 'PUT',
+    url: '/aggregate/:id',
+    preValidation: jwtValid,
+    handler: AggregateObjectController.putObject,
   },
 ];

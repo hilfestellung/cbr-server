@@ -11,6 +11,7 @@ import tracing from '@hilfestellung/fastify-tracing';
 
 import tenant, { TenantInformation } from './plugins/fastify-tenant';
 import jwksJwt from './plugins/fastify-jwks-rsa-jwt-verify';
+import retriever from './plugins/fastify-retriever';
 import jwksClient from 'jwks-rsa';
 import { connect } from 'mongoose';
 import { Tenant } from './model/Tenant';
@@ -91,6 +92,7 @@ fastify.register(tenant, {
   },
 });
 fastify.register(jwksJwt, opt);
+fastify.register(retriever);
 
 // Declare a routes
 routes.forEach((route) => fastify.route(route as RouteOptions));

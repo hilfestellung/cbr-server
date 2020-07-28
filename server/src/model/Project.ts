@@ -7,7 +7,10 @@ const ProjectSchema = new Schema(
     tenant: { type: String, immutable: true, required: true },
     languages: { type: [String], default: void 0 },
     queryClass: { type: String },
+    defaultEvaluatorId: { type: String },
     properties: { type: Object },
+    classes: { type: [String], default: void 0 },
+    evaluators: { type: [String], default: void 0 },
   },
   {
     timestamps: true,
