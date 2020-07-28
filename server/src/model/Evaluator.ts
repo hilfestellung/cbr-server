@@ -27,8 +27,6 @@ const EvaluatorSchema = new Schema(
 
     lookup: { type: Schema.Types.Mixed },
 
-    min: { type: Schema.Types.Mixed },
-    max: { type: Schema.Types.Mixed },
     cyclic: { type: Boolean, default: false },
     origin: { type: Schema.Types.Mixed },
     useOrigin: { type: Boolean, default: false },
