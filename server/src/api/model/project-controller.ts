@@ -28,7 +28,15 @@ async function getProject(request: FastifyRequest, reply: FastifyReply) {
   return (await project.save()).toObject();
 }
 
-async function postProject(request: FastifyRequest, _reply: FastifyReply) {
+async function postProject(request: FastifyRequest, reply: FastifyReply) {
+  const { tenant } = request;
+  const projectCount = await Project.find({ tenant: tenant.name }).count();
+  if (projectCount > 0) {
+    return reply.status(404).send({
+      code: 'ProjectAmountExpired',
+      message: 'Your tenant needs to upgrade, only one project is allowed.',
+    });
+  }
   return (
     await new Project(request.body).set('tenant', request.tenant.name).save()
   ).toObject();

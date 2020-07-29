@@ -16,11 +16,6 @@ import { ModelClass } from '../model/ModelClass';
 import { Evaluator as MongooseEvaluator } from '../model/Evaluator';
 import { AggregateObject as MongooseAggregateObject } from '../model/AggregateObject';
 
-export interface TenantInformation {
-  name: string;
-  settings: any;
-}
-
 declare module 'fastify' {
   interface FastifyRequest {
     project: Project;
@@ -79,11 +74,6 @@ export async function createRetriever(project: Project) {
   );
 }
 
-export interface TenantOptions<T extends TenantInformation> {
-  tenantHeader?: string;
-  tenantResolver?: (tenantId: string) => Promise<T>;
-}
-
 function plugin(
   fastify: FastifyInstance,
   _options: FastifyPluginOptions,
@@ -109,7 +99,10 @@ function plugin(
   fastify.decorateRequest('retriever', null);
   fastify.addHook('onRequest', async (request, _reply) => {
     const { tenant } = request;
-    const { project, retriever } = tenantRetrieverCache[tenant.name];
+    const { project, retriever }: any =
+      tenantRetrieverCache[tenant.name] != null
+        ? tenantRetrieverCache[tenant.name]
+        : {};
     request.project = project;
     request.retriever = retriever;
   });
