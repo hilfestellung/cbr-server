@@ -37,7 +37,8 @@ async function postEvaluator(request: FastifyRequest, _reply: FastifyReply) {
 }
 
 async function putEvaluator(request: FastifyRequest, reply: FastifyReply) {
-  const { id }: any = request.params;
+  const { log, params } = request;
+  const { id }: any = params;
   const evaluator = await Evaluator.findOne({
     id,
     tenant: request.tenant.name,
@@ -48,7 +49,9 @@ async function putEvaluator(request: FastifyRequest, reply: FastifyReply) {
       message: 'Evaluator resource is not found by the given ID.',
     });
   }
-  evaluator.set(evaluatorFactory(request.body)?.toJSON());
+  const newEvaluator = evaluatorFactory(request.body)?.toJSON();
+  log.debug({ newEvaluator, input: request.body });
+  evaluator.set(newEvaluator);
   return (await evaluator.save()).toObject();
 }
 
