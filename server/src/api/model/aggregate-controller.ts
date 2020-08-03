@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { AggregateObject } from '../../model/AggregateObject';
 import { classFactory } from '@hilfestellung/cbr-kernel';
+import { Sequence } from '../../model/Sequence';
 
 async function getObjects(request: FastifyRequest, _reply: FastifyReply) {
   const { query, tenant, project }: any = request;
@@ -34,14 +35,17 @@ async function getObject(request: FastifyRequest, reply: FastifyReply) {
 }
 
 async function postObject(request: FastifyRequest, _reply: FastifyReply) {
-  const { tenant, project }: any = request;
-  return (
-    await new AggregateObject(
-      project.queryClass.readObject(request.body)?.toJSON()
-    )
+  const { tenant, project, body }: any = request;
+  const newObject = (
+    await new AggregateObject(project.queryClass.readObject(body)?.toJSON())
       .set('tenant', tenant.name)
+      .set('revision', await Sequence.nextValue('revision'))
       .save()
   ).toObject();
+  if (request.retriever) {
+    request.retriever.addCase(newObject);
+  }
+  return newObject;
 }
 
 async function putObject(request: FastifyRequest, reply: FastifyReply) {

@@ -16,6 +16,7 @@ async function getRoot(request: FastifyRequest, reply: FastifyReply) {
     }
     delete result.jwks;
     delete result.cors;
+    result.project = request.project;
     return result;
   } catch (err) {
     throw boomify(err);

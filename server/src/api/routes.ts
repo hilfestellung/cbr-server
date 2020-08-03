@@ -5,6 +5,8 @@ import { ModelClassController } from './model/modelclass-controller';
 import { ProjectController } from './model/project-controller';
 import { EvaluatorController } from './model/evaluator-controller';
 import { AggregateObjectController } from './model/aggregate-controller';
+import { EvaluationController } from './evaluation/evaluation-controller';
+import { RetrieverController } from './retriever/retriever-controller';
 
 export default [
   {
@@ -128,5 +130,16 @@ export default [
     url: '/aggregate/:id',
     preValidation: jwtValid,
     handler: AggregateObjectController.putObject,
+  },
+  // Retriever
+  {
+    method: 'POST',
+    url: '/evaluate',
+    handler: EvaluationController.evaluate,
+  },
+  {
+    method: 'POST',
+    url: '/reloadProject',
+    handler: RetrieverController.reloadProject,
   },
 ];

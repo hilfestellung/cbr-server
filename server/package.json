@@ -1,6 +1,6 @@
 {
   "name": "@hilfestellung/cbr-server",
-  "version": "0.0.12",
+  "version": "0.0.14",
   "description": "Case Based Reasoning Kernel",
   "author": "Christian Dein",
   "license": "LGPL-2.1-or-later",
@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^9.1.0",
-    "@hilfestellung/cbr-kernel": "0.0.24",
+    "@hilfestellung/cbr-kernel": "0.0.29",
     "@hilfestellung/fastify-tracing": "0.0.4",
     "fastify": "^3.1.1",
     "fastify-compress": "^3.2.1",

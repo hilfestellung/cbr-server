@@ -8,8 +8,10 @@ const AggregateObjectSchema = new Schema(
     properties: { type: Object },
     attributes: {
       type: [{ id: { type: String }, value: Schema.Types.Mixed }],
+      _id: false,
       default: void 0,
     },
+    revision: { type: Number },
   },
   {
     timestamps: true,
