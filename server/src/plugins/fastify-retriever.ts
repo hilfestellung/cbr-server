@@ -12,6 +12,7 @@ import {
   Retriever,
   ModelClass,
   AggregateEvaluator,
+  SetClass,
 } from '@hilfestellung/cbr-kernel';
 import { Project as MongooseProject } from '../model/Project';
 import { ModelClass as MongooseModelClass } from '../model/ModelClass';
@@ -33,14 +34,31 @@ async function classesFrom(
   aggregateClass: AggregateClass,
   ignoreIds: string[] = []
 ): Promise<ModelClass<any>[]> {
-  const classIds: string[] = aggregateClass.attributes
+  let classIds: string[] = aggregateClass.attributes
     .map((attribute) => attribute.typeId)
     .filter((id) => !ignoreIds.includes(id));
+
   let classes: ModelClass<any>[] = (
     await MongooseModelClass.find({ id: { $in: classIds } })
   ).map((doc) => doc.toObject());
   classes.push(aggregateClass);
   ignoreIds.push(aggregateClass.id);
+
+  const sets = classes.filter(
+    (modelClass) => !ignoreIds.includes(modelClass.id) && modelClass.isSet()
+  );
+  if (sets.length > 0) {
+    classes = classes.concat(
+      (
+        await MongooseModelClass.find({
+          id: { $in: sets.map((set: SetClass<any>) => set.elementTypeId) },
+        })
+      ).map((doc) => doc.toObject()) as ModelClass<any>[]
+    );
+    classIds = classIds.concat(
+      sets.map((set: SetClass<any>) => set.elementTypeId) as string[]
+    );
+  }
 
   const aggregates = classes.filter(
     (modelClass) =>
@@ -59,6 +77,7 @@ async function classesFrom(
   ).forEach((subClasses) => {
     classes = classes.concat(...subClasses);
   });
+
   return classes;
 }
 
