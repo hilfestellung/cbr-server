@@ -13,6 +13,7 @@ import {
   ModelClass,
   AggregateEvaluator,
   SetClass,
+  SetEvaluator,
 } from '@hilfestellung/cbr-kernel';
 import { Project as MongooseProject } from '../model/Project';
 import { ModelClass as MongooseModelClass } from '../model/ModelClass';
@@ -85,12 +86,29 @@ async function evaluatorsFrom(
   aggregateEvaluator: AggregateEvaluator,
   ignoreIds: string[] = []
 ): Promise<SimilarityEvaluator<any>[]> {
-  const evaluatorIds = aggregateEvaluator.attributes
+  let evaluatorIds = aggregateEvaluator.attributes
     .map((attribute) => attribute.evaluator)
     .filter((id) => !ignoreIds.includes(id));
-  const evaluators: SimilarityEvaluator<any>[] = (
+  let evaluators: SimilarityEvaluator<any>[] = (
     await MongooseEvaluator.find({ id: { $in: evaluatorIds } })
   ).map((doc) => doc.toObject());
+
+  const sets = evaluators.filter((evaluator) => evaluator.pattern === 'set');
+  if (sets.length > 0) {
+    evaluators = evaluators.concat(
+      (
+        await MongooseEvaluator.find({
+          id: {
+            $in: sets.map((set: SetEvaluator) => set.elementEvaluatorId),
+          },
+        })
+      ).map((doc) => doc.toObject()) as SimilarityEvaluator<any>[]
+    );
+    evaluatorIds = evaluatorIds.concat(
+      sets.map((set: SetEvaluator) => set.elementEvaluatorId) as string[]
+    );
+  }
+
   const aggregates = evaluators.filter(
     (evaluator) => evaluator.pattern === 'aggregate'
   );
@@ -134,6 +152,8 @@ export async function createRetriever(project: Project) {
   // Adjust classes -> load class instances from class ids
   adjustClasses(classes || []);
   project.classes = classes || [];
+  project.evaluators = evaluators || [];
+  queryClassEvaluator.evaluators = evaluators;
   // Provide the query class instance to the project
   // Assign the right min/max values to the number evaluators
   (evaluators || [])
@@ -145,8 +165,11 @@ export async function createRetriever(project: Project) {
         evaluator.setRange(range.getMinimum().id, range.getMaximum().id);
       }
     });
-  project.evaluators = evaluators || [];
-  queryClassEvaluator.evaluators = evaluators;
+  (evaluators || [])
+    .filter((evaluator) => evaluator.pattern === 'set')
+    .forEach((evaluator: SetEvaluator) => {
+      evaluator.evaluator = project.getEvaluator(evaluator.elementEvaluatorId);
+    });
   // Create the linear retriever
   return new LinearRetriever(
     // Loading cases
