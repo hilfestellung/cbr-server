@@ -4,7 +4,8 @@ const AggregateObjectSchema = new Schema(
   {
     id: { type: String, immutable: true, required: true },
     tenant: { type: String, immutable: true, required: true },
-    type: { type: String },
+    project: { type: String, immutable: true, required: true },
+    type: { type: String, immutable: true, required: true },
     properties: { type: Object },
     attributes: {
       type: [{ id: { type: String }, value: Schema.Types.Mixed }],
@@ -26,5 +27,5 @@ AggregateObjectSchema.index({ type: 1 });
 export const AggregateObject = model(
   'AggregateObject',
   AggregateObjectSchema,
-  'aggregates'
+  'objects'
 );

@@ -36,9 +36,14 @@ async function getObject(request: FastifyRequest, reply: FastifyReply) {
 
 async function postObject(request: FastifyRequest, _reply: FastifyReply) {
   const { tenant, project, body }: any = request;
+  console.log(body);
+  const object = project.queryClass.readObject(body)?.toJSON();
+  console.log(object);
   const newObject = (
-    await new AggregateObject(project.queryClass.readObject(body)?.toJSON())
+    await new AggregateObject(object)
       .set('tenant', tenant.name)
+      .set('project', project.id)
+      .set('type', project.queryClassId)
       .set('revision', await Sequence.nextValue('revision'))
       .save()
   ).toObject();
@@ -72,6 +77,7 @@ async function removeObject(request: FastifyRequest, reply: FastifyReply) {
   const aggregateObject = await AggregateObject.findOne({
     id,
     tenant: tenant.name,
+    project: project.id,
     type: project.queryClassId,
   });
   if (aggregateObject == null) {
@@ -83,10 +89,21 @@ async function removeObject(request: FastifyRequest, reply: FastifyReply) {
   return (await aggregateObject.deleteOne()).toObject();
 }
 
+async function removeAllObjects(request: FastifyRequest, _reply: FastifyReply) {
+  const { tenant, project }: any = request;
+  await AggregateObject.remove({
+    tenant: tenant.name,
+    project: project.id,
+    type: project.queryClassId,
+  });
+  return {};
+}
+
 export const AggregateObjectController = {
   getObjects,
   postObject,
   getObject,
   putObject,
   removeObject,
+  removeAllObjects,
 };

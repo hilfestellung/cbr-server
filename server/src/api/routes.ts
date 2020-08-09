@@ -121,6 +121,12 @@ export default [
     handler: AggregateObjectController.postObject,
   },
   {
+    method: 'DELETE',
+    url: '/aggregate',
+    preValidation: jwtValid,
+    handler: AggregateObjectController.removeAllObjects,
+  },
+  {
     method: 'GET',
     url: '/aggregate/:id',
     handler: AggregateObjectController.getObject,
