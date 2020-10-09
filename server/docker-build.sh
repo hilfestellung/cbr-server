@@ -2,7 +2,7 @@
 #
 # sudo apt-get install jq 
 
-NPM_TOKEN=$(cat ~/.github.token)
+NPM_TOKEN=$(cat ~/.tokens/cbr.token)
 PACKAGE_VERSION=$(jq -r ".version" package.json)
 
 npm run build

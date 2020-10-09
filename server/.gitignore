@@ -93,3 +93,5 @@ lib
 
 # TernJS port file
 .tern-port
+
+src.bak
