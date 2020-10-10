@@ -1,9 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { Configuration } from '../Configuration';
 
-import cors from './cors';
+//import cors from './cors';
 import database from './database';
 import messageQueue from './message-queue';
+import swagger from './swagger';
 import tenant from './tenant';
 
 export default async (
@@ -12,8 +13,9 @@ export default async (
 ) => {
   await database(fastify, configuration);
   await messageQueue(fastify, configuration);
+  await tenant(fastify, configuration);
   return Promise.all([
-    tenant(fastify, configuration),
-    cors(fastify, configuration),
+    //cors(fastify, configuration),
+    swagger(fastify, configuration),
   ]);
 };

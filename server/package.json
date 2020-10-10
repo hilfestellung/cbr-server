@@ -50,6 +50,7 @@
     "fastify-compress": "^3.3.0",
     "fastify-cors": "^4.1.0",
     "fastify-plugin": "^2.3.0",
+    "fastify-swagger": "^3.4.0",
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^1.8.1",
     "mongoose": "^5.10.0",

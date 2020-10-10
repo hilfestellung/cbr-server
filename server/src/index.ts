@@ -22,6 +22,8 @@ const start = async () => {
     );
 
     await fastify.listen(8080, '0.0.0.0');
+    await fastify.ready();
+    fastify.swagger();
     logger.info(
       `server listening on ${(fastify.server.address() as AddressInfo).port}`
     );
