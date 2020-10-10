@@ -24,6 +24,7 @@ export interface DatabaseConfiguration {
 }
 
 export interface Configuration {
+  version: string;
   database: DatabaseConfiguration;
   logger: FastifyLoggerOptions;
 }

@@ -19,9 +19,13 @@ export interface TenantInformation {
   settings: any;
 }
 
+export interface TenantExtractFunction {
+  (request: FastifyRequest): Promise<string | undefined>;
+}
+
 export interface TenantOptions<T extends TenantInformation> {
   header?: string;
-  extract?: (request: FastifyRequest) => Promise<string>;
+  extract?: TenantExtractFunction | TenantExtractFunction[];
   resolve?: (tenantId: string) => Promise<T>;
 }
 
@@ -37,17 +41,21 @@ export function hasTenant(
   done();
 }
 
-function createDefaultTenantExtract(options: TenantOptions<any>) {
+export function createDefaultTenantExtract(
+  options: TenantOptions<any>
+): TenantExtractFunction {
   const { header } = { header: 'origin', ...options } as TenantOptions<any>;
-  return async function tenantResolver(
-    request: FastifyRequest,
-    _reply: FastifyReply
-  ) {
+  return async function tenantExtraction(request: FastifyRequest) {
     const { log } = request;
     if (header) {
-      const { hostname } = parse(request.headers[header] as string);
-      const [tenant] = hostname?.split('.') || [];
-      log.debug(`Request tenant for ${tenant}`);
+      let tenant;
+      const headerValue = request.headers[header] as string;
+      if (headerValue) {
+        const { hostname } = parse(headerValue);
+        const [subdomain] = hostname?.split('.') || [];
+        tenant = subdomain;
+        log.debug(`Request tenant for ${tenant}`);
+      }
       return tenant;
     }
     return;
@@ -64,12 +72,23 @@ function plugin(
     resolve: (name: string) => ({ name }),
     ...options,
   };
+  let responsibles: TenantExtractFunction[];
+  if (Array.isArray(extract)) {
+    responsibles = extract;
+  } else {
+    responsibles = [extract];
+  }
   fastify.decorateRequest('tenant', null);
   fastify.addHook(
     'onRequest',
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      if (extract && resolve) {
-        const tenantId = await extract(request, reply);
+    async (request: FastifyRequest, _reply: FastifyReply) => {
+      if (responsibles && resolve) {
+        let tenantId;
+        let i = 0;
+        do {
+          const singleExtract = extract[i++];
+          tenantId = await singleExtract(request);
+        } while (i < extract.length && !tenantId);
         if (tenantId) {
           request.tenant = await resolve(tenantId);
         }
