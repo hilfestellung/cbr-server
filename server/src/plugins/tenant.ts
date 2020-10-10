@@ -41,6 +41,17 @@ export function hasTenant(
   done();
 }
 
+export function extractSubdomain(url: string): string | undefined {
+  if (url) {
+    const { hostname } = parse(url);
+    const parts = hostname?.split('.') || [];
+    if (parts && parts.length > 2) {
+      return parts[0];
+    }
+  }
+  return;
+}
+
 export function createDefaultTenantExtract(
   options: TenantOptions<any>
 ): TenantExtractFunction {
@@ -51,9 +62,7 @@ export function createDefaultTenantExtract(
       let tenant;
       const headerValue = request.headers[header] as string;
       if (headerValue) {
-        const { hostname } = parse(headerValue);
-        const [subdomain] = hostname?.split('.') || [];
-        tenant = subdomain;
+        tenant = extractSubdomain(headerValue);
         log.debug(`Request tenant for ${tenant}`);
       }
       return tenant;
