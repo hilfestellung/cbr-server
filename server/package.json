@@ -45,7 +45,7 @@
     "@hapi/boom": "^9.1.0",
     "@hilfestellung/cbr-kernel": "0.0.33",
     "@hilfestellung/fastify-tracing": "0.0.4",
-    "fastify": "^3.2.0",
+    "fastify": "^5.12.5",
     "fastify-compress": "^3.3.0",
     "fastify-cors": "^4.1.0",
     "fastify-plugin": "^2.2.0",
